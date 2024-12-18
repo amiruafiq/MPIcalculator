@@ -1,132 +1,61 @@
-// Configure AWS
-AWS.config.update(awsConfig);
-
-// Initialize AWS Services
-const ec2 = new AWS.EC2();
-const pricing = new AWS.Pricing({ region: "us-east-1" });
-
-// Fetch Instance Types
-async function fetchInstanceTypes() {
-  const params = {
-    Filters: [{ Name: "current-generation", Values: ["true"] }], // Fetch current-generation instances
-  };
-
-  try {
-    const response = await ec2.describeInstanceTypes(params).promise();
-    const instanceTypes = response.InstanceTypes.map((instance) => ({
-      type: instance.InstanceType,
-      cpu: instance.VCpuInfo.DefaultVCpus,
-      ram: instance.MemoryInfo.SizeInMiB / 1024, // Convert MiB to GiB
-    }));
-
-    populateInstanceTypes(instanceTypes);
-  } catch (error) {
-    console.error("Error fetching instance types:", error);
-  }
-}
-
-// Populate Dropdown
+// Populate Dropdown with Search Bar, Filter, and Scroll
 function populateInstanceTypes(instanceTypes) {
-  const instanceTypeDropdown = document.getElementById("instanceType");
-  instanceTypeDropdown.innerHTML = ""; // Clear existing options
-
-  instanceTypes.forEach((instance) => {
-    const option = document.createElement("option");
-    option.value = instance.type;
-    option.textContent = `${instance.type} (CPU: ${instance.cpu}, RAM: ${instance.ram.toFixed(1)}GB)`;
-    instanceTypeDropdown.appendChild(option);
-  });
-}
-
-// Fetch Price for EC2 Instances
-async function fetchInstancePrice(instanceType) {
-    const params = {
-      ServiceCode: "AmazonEC2",
-      Filters: [
-        { Type: "TERM_MATCH", Field: "instanceType", Value: instanceType },
-        { Type: "TERM_MATCH", Field: "location", Value: "US East (N. Virginia)" }, // Adjust region
-        { Type: "TERM_MATCH", Field: "operatingSystem", Value: "Linux" }, // Adjust OS
-        { Type: "TERM_MATCH", Field: "tenancy", Value: "Shared" }, // Shared tenancy
-      ],
-    };
+    const container = document.getElementById("instanceTypeContainer");
+    container.innerHTML = ""; // Clear existing content
   
-    try {
-      const response = await pricing.getProducts(params).promise();
-      console.log("Pricing API Response:", response);
+    console.log("Populating Instance Types..."); // Debug log
   
-      if (!response.PriceList || response.PriceList.length === 0) {
-        throw new Error("No pricing data available for the selected instance type.");
-      }
+    // Create filter dropdown
+    const filterDropdown = document.createElement("select");
+    filterDropdown.id = "filterDropdown";
+    filterDropdown.style.marginBottom = "10px";
+    filterDropdown.style.width = "100%";
   
-      // Extract the first item from the PriceList
-      const priceData = typeof response.PriceList[0] === "string"
-        ? JSON.parse(response.PriceList[0]) // Parse only if it's a string
-        : response.PriceList[0];
-      console.log("Parsed Price Data:", priceData);
+    // Populate filter options (e.g., t2, t3, etc.)
+    const uniqueFamilies = Array.from(new Set(instanceTypes.map((instance) => instance.type.split(".")[0])));
+    uniqueFamilies.forEach((family) => {
+      const option = document.createElement("option");
+      option.value = family;
+      option.textContent = family;
+      filterDropdown.appendChild(option);
+    });
   
-// Extract On-Demand Pricing
-const onDemand = priceData.terms.OnDemand; // Access the On-Demand pricing object
-
-// Get the first On-Demand term key
-const firstTermKey = Object.keys(onDemand)[0]; // Example: "GQNKTDHNVN3P4APG.JRTCKXETXF"
-
-// Access price dimensions under the On-Demand term
-const priceDimensions = onDemand[firstTermKey].priceDimensions;
-
-// Get the first price dimension key
-const firstPriceDimensionKey = Object.keys(priceDimensions)[0]; // Example: "JRTCKXETXF.6YS6EN2CT7"
-
-// Extract the USD price per hour from the price dimension
-const pricePerHour = parseFloat(priceDimensions[firstPriceDimensionKey].pricePerUnit.USD);
-
-console.log("Price Per Hour:", pricePerHour); // Log the extracted price per hour for debugging
-
+    // Create search bar
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.placeholder = "Search instance type...";
+    searchInput.style.marginBottom = "10px";
+    searchInput.style.width = "100%";
   
-      return pricePerHour;
-    } catch (error) {
-      console.error("Error fetching instance price:", error);
-      return 0; // Default fallback price
+    // Create dropdown container
+    const instanceTypeDropdown = document.createElement("select");
+    instanceTypeDropdown.id = "instanceType";
+    instanceTypeDropdown.size = 10; // Enable multiple visible options
+    instanceTypeDropdown.style.width = "100%";
+  
+    container.appendChild(filterDropdown);
+    container.appendChild(searchInput);
+    container.appendChild(instanceTypeDropdown);
+  
+    function filterOptions() {
+      const searchValue = searchInput.value.toLowerCase();
+      const selectedFamily = filterDropdown.value;
+  
+      Array.from(instanceTypeDropdown.options).forEach((option) => {
+        const isFamilyMatch = option.value.startsWith(selectedFamily);
+        const isSearchMatch = option.textContent.toLowerCase().includes(searchValue);
+        option.style.display = isFamilyMatch && isSearchMatch ? "" : "none";
+      });
     }
+  
+    filterDropdown.addEventListener("change", filterOptions);
+    searchInput.addEventListener("input", filterOptions);
+  
+    instanceTypes.forEach((instance) => {
+      const option = document.createElement("option");
+      option.value = instance.type;
+      option.textContent = `${instance.type} (CPU: ${instance.cpu}, RAM: ${instance.ram.toFixed(1)}GB)`;
+      instanceTypeDropdown.appendChild(option);
+    });
   }
-  
-  
-
-// Calculate Price
-async function calculatePrice() {
-    const selectedInstanceType = document.getElementById("instanceType").value;
-    const storageType = document.getElementById("storageType").value;
-    const storageSize = parseInt(document.getElementById("storageSize").value);
-  
-    if (!selectedInstanceType) {
-      alert("Please select an instance type.");
-      return;
-    }
-  
-    try {
-      // Fetch price for the selected instance type
-      const instancePrice = await fetchInstancePrice(selectedInstanceType);
-  
-      // Calculate storage cost
-      const storageCost = storageSize * (storageType === "SSD" ? 0.2 : 0.1);
-  
-      // Total cost with 30% markup
-      const totalCost = (instancePrice + storageCost) * 1.3;
-  
-      // Display result
-      document.getElementById("result-display").innerHTML = `
-        <h2>Results</h2>
-        <p><strong>Instance Type:</strong> ${selectedInstanceType}</p>
-        <p><strong>Instance Cost (per hour):</strong> $${instancePrice.toFixed(2)}</p>
-        <p><strong>Storage Cost:</strong> $${storageCost.toFixed(2)}</p>
-        <p><strong>Total Cost (with 30% markup):</strong> $${totalCost.toFixed(2)}</p>
-      `;
-    } catch (error) {
-      console.error("Error calculating price:", error);
-      document.getElementById("result-display").textContent = "Error calculating price.";
-    }
-  }
-  
-
-// Event Listeners
-document.getElementById("calculate-button").addEventListener("click", calculatePrice);
-document.addEventListener("DOMContentLoaded", fetchInstanceTypes);
+   
