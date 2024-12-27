@@ -1,61 +1,38 @@
-// Populate Dropdown with Search Bar, Filter, and Scroll
-function populateInstanceTypes(instanceTypes) {
-    const container = document.getElementById("instanceTypeContainer");
-    container.innerHTML = ""; // Clear existing content
-  
-    console.log("Populating Instance Types..."); // Debug log
-  
-    // Create filter dropdown
-    const filterDropdown = document.createElement("select");
-    filterDropdown.id = "filterDropdown";
-    filterDropdown.style.marginBottom = "10px";
-    filterDropdown.style.width = "100%";
-  
-    // Populate filter options (e.g., t2, t3, etc.)
-    const uniqueFamilies = Array.from(new Set(instanceTypes.map((instance) => instance.type.split(".")[0])));
-    uniqueFamilies.forEach((family) => {
-      const option = document.createElement("option");
-      option.value = family;
-      option.textContent = family;
-      filterDropdown.appendChild(option);
-    });
-  
-    // Create search bar
-    const searchInput = document.createElement("input");
-    searchInput.type = "text";
-    searchInput.placeholder = "Search instance type...";
-    searchInput.style.marginBottom = "10px";
-    searchInput.style.width = "100%";
-  
-    // Create dropdown container
-    const instanceTypeDropdown = document.createElement("select");
-    instanceTypeDropdown.id = "instanceType";
-    instanceTypeDropdown.size = 10; // Enable multiple visible options
-    instanceTypeDropdown.style.width = "100%";
-  
-    container.appendChild(filterDropdown);
-    container.appendChild(searchInput);
-    container.appendChild(instanceTypeDropdown);
-  
-    function filterOptions() {
-      const searchValue = searchInput.value.toLowerCase();
-      const selectedFamily = filterDropdown.value;
-  
-      Array.from(instanceTypeDropdown.options).forEach((option) => {
-        const isFamilyMatch = option.value.startsWith(selectedFamily);
-        const isSearchMatch = option.textContent.toLowerCase().includes(searchValue);
-        option.style.display = isFamilyMatch && isSearchMatch ? "" : "none";
-      });
-    }
-  
-    filterDropdown.addEventListener("change", filterOptions);
-    searchInput.addEventListener("input", filterOptions);
-  
-    instanceTypes.forEach((instance) => {
-      const option = document.createElement("option");
-      option.value = instance.type;
-      option.textContent = `${instance.type} (CPU: ${instance.cpu}, RAM: ${instance.ram.toFixed(1)}GB)`;
-      instanceTypeDropdown.appendChild(option);
-    });
+// Fetch instance types from the backend API
+async function fetchInstanceTypes() {
+  try {
+    const response = await fetch("http://localhost:3000/api/instances");
+    const instanceTypes = await response.json();
+
+    console.log("Fetched Instance Types:", instanceTypes);
+
+    // Populate the dropdown with the fetched data
+    populateInstanceTypes(instanceTypes);
+  } catch (error) {
+    console.error("Error fetching instance types:", error);
   }
-   
+}
+
+// Populate dropdown with instance types
+function populateInstanceTypes(instanceTypes) {
+  const container = document.getElementById("instanceTypeContainer");
+  container.innerHTML = ""; // Clear existing content
+
+  const instanceTypeDropdown = document.createElement("select");
+  instanceTypeDropdown.id = "instanceType";
+  instanceTypeDropdown.size = 10;
+  instanceTypeDropdown.style.width = "100%";
+  instanceTypeDropdown.style.overflowY = "scroll";
+
+  instanceTypes.forEach((instance) => {
+    const option = document.createElement("option");
+    option.value = instance.type;
+    option.textContent = `${instance.type} (CPU: ${instance.cpu}, RAM: ${instance.ram.toFixed(1)}GB)`;
+    instanceTypeDropdown.appendChild(option);
+  });
+
+  container.appendChild(instanceTypeDropdown);
+}
+
+// Event listener to fetch instance types on page load
+document.addEventListener("DOMContentLoaded", fetchInstanceTypes);

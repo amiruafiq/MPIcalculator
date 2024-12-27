@@ -14,3 +14,8 @@ Perform cost calculations.
 styles.css:
 
 Same as before, for styling.
+
+
+!!!!!!!
+ERROR DUE TO TABLE porpulated data
+unable to fix due become more complex
