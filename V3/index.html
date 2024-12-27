@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI Calculator v3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MPI Calculator v3</h1>
+    
+    <form id="calculator-form">
+        <label for="region">Region:</label>
+        <select id="region" name="region">
+            <option value="">Select a region</option>
+        </select>
+
+        <label for="os">Operating System:</label>
+        <select id="os" name="os">
+            <option value="">Select an OS</option>
+        </select>
+
+        <label for="ec2">EC2 Instance Type:</label>
+        <select id="ec2" name="ec2">
+            <option value="">Select an EC2 Instance</option>
+        </select>
+
+        <label for="ebs">EBS Storage Size (GB):</label>
+        <input type="number" id="ebs" name="ebs" min="1" placeholder="Enter EBS size in GB">
+
+        <button type="button" id="fetch-data">Fetch Data</button>
+        <button type="button" id="reset-form">Reset</button>
+    </form>
+
+    <div class="results" id="results"></div>
+
+    <script type="module">
+        import AWS from 'aws-sdk';
+        import credentials from './aws-credentials.js'; // Importing credentials from an external file
+
+        // Configure AWS
+        AWS.config.update({
+            accessKeyId: credentials.accessKeyId,
+            secretAccessKey: credentials.secretAccessKey,
+            region: 'us-east-1', // Default region
+        });
+
+        const ec2 = new AWS.EC2();
+        const pricing = new AWS.Pricing({ region: 'us-east-1' });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const regionDropdown = document.getElementById('region');
+            const osDropdown = document.getElementById('os');
+            const ec2Dropdown = document.getElementById('ec2');
+            const resultsDiv = document.getElementById('results');
+
+            // Fetch Regions
+            async function fetchRegions() {
+                try {
+                    const data = await ec2.describeRegions().promise();
+                    const regions = data.Regions.map(region => region.RegionName);
+                    regions.forEach(region => {
+                        const option = document.createElement('option');
+                        option.value = region;
+                        option.textContent = region;
+                        regionDropdown.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error fetching regions:', error);
+                }
+            }
+
+            // Fetch EC2 Instances
+            async function fetchEC2Instances(osType) {
+                try {
+                    const filters = [
+                        { Type: 'TERM_MATCH', Field: 'operatingSystem', Value: osType },
+                        { Type: 'TERM_MATCH', Field: 'serviceCode', Value: 'AmazonEC2' },
+                    ];
+                    const data = await pricing.getProducts({ ServiceCode: 'AmazonEC2', Filters: filters }).promise();
+                    const products = JSON.parse(data.PriceList);
+                    const instanceTypes = products.map(product => product.attributes.instanceType);
+                    const uniqueInstances = [...new Set(instanceTypes)];
+
+                    uniqueInstances.forEach(instance => {
+                        const option = document.createElement('option');
+                        option.value = instance;
+                        option.textContent = instance;
+                        ec2Dropdown.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error fetching EC2 instances:', error);
+                }
+            }
+
+            // Fetch EBS Types (Predefined Mapping)
+            function fetchEBSTypes() {
+                const ebsTypes = [
+                    { type: 'gp2', description: 'General Purpose SSD' },
+                    { type: 'io1', description: 'Provisioned IOPS SSD' },
+                    { type: 'st1', description: 'Throughput Optimized HDD' },
+                    { type: 'sc1', description: 'Cold HDD' },
+                ];
+                return Promise.resolve(ebsTypes);
+            }
+
+            // Populate OS Dropdown
+            const osTypes = ['Linux', 'Windows'];
+            osTypes.forEach(os => {
+                const option = document.createElement('option');
+                option.value = os;
+                option.textContent = os;
+                osDropdown.appendChild(option);
+            });
+
+            // Fetch Data Button
+            document.getElementById('fetch-data').addEventListener('click', async () => {
+                const region = regionDropdown.value;
+                const os = osDropdown.value;
+                const ebs = document.getElementById('ebs').value;
+
+                if (!region || !os || !ebs) {
+                    resultsDiv.textContent = 'Please fill in all fields before fetching data.';
+                    return;
+                }
+
+                ec2Dropdown.innerHTML = '<option value="">Select an EC2 Instance</option>'; // Reset EC2 dropdown
+                await fetchEC2Instances(os);
+
+                resultsDiv.innerHTML = `
+                    <h3>Selected Inputs:</h3>
+                    <p><strong>Region:</strong> ${region}</p>
+                    <p><strong>Operating System:</strong> ${os}</p>
+                    <p><strong>EBS Size:</strong> ${ebs} GB</p>
+                `;
+            });
+
+            // Reset Button
+            document.getElementById('reset-form').addEventListener('click', () => {
+                regionDropdown.value = '';
+                osDropdown.value = '';
+                ec2Dropdown.innerHTML = '<option value="">Select an EC2 Instance</option>';
+                document.getElementById('ebs').value = '';
+                resultsDiv.textContent = '';
+            });
+
+            // Initialize Regions on Load
+            fetchRegions();
+        });
+    </script>
+</body>
+</html>
