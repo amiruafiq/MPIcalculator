@@ -51,3 +51,7 @@ Functional webpage where:
 User selects inputs (region, OS, EC2 instance, EBS size).
 Backend fetches and displays corresponding data dynamically.
 No calculations yet, only data fetching and display.
+
+
+ISSUE
+Unable to extract ec2 isntant type

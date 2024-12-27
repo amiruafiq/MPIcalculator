@@ -66,8 +66,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // AWS Configuration
             AWS.config.update({
-                accessKeyId: 'YOUR_ACCESS_KEY_ID',
-                secretAccessKey: 'YOUR_SECRET_ACCESS_KEY',
+                accessKeyId: 'xxxxs',
+                secretAccessKey: 'xxx/xx',
                 region: 'us-east-1', // Default region
             });
 
@@ -128,18 +128,20 @@
             // Fetch EC2 Instances
             async function fetchEC2Instances(region) {
                 try {
-                    // Configure EC2 client for the selected region
-                    const ec2Client = new AWS.EC2({ region });
+                    // Configure Pricing API client
+                    const pricing = new AWS.Pricing({ region: 'us-east-1' });
 
-                    // Fetch instance types using DescribeInstanceTypes
-                    const data = await ec2Client.describeInstanceTypes().promise();
+                    // Fetch products with EC2 service code
+                    const filters = [{ Type: 'TERM_MATCH', Field: 'serviceCode', Value: 'AmazonEC2' }];
+                    const data = await pricing.getProducts({ ServiceCode: 'AmazonEC2', Filters: filters }).promise();
 
-                    console.log('Raw EC2 Instance Types Response:', data);
+                    console.log('Raw EC2 Pricing Data:', data.PriceList);
 
-                    // Extract instance types
+                    // Extract instance types from product attributes
                     const instanceSet = new Set();
-                    data.InstanceTypes.forEach(instance => {
-                        const instanceType = instance.InstanceType;
+                    data.PriceList.forEach(item => {
+                        const attributes = item.product?.attributes;
+                        const instanceType = attributes?.instanceType;
                         if (instanceType) {
                             instanceSet.add(instanceType);
                         }
