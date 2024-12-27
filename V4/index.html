@@ -164,8 +164,8 @@
 
             const matchingItem = jsonData.find(item => {
                 const attributes = item.product.attributes;
-                return attributes.location === region &&
-                       attributes.operatingSystem === operatingSystem &&
+                return attributes.location.toLowerCase() === region.toLowerCase() &&
+                       attributes.operatingSystem.toLowerCase() === operatingSystem.toLowerCase() &&
                        attributes.instanceType === instanceType;
             });
 
@@ -243,3 +243,4 @@
     </script>
 </body>
 </html>
+
