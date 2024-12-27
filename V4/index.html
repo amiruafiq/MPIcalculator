@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI Calculator v4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select, input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            margin-top: 20px;
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>MPI Calculator v4</h1>
+    <div class="container">
+        <div id="dropdowns">
+            <!-- Dropdowns will be populated here -->
+        </div>
+
+        <label for="ebsVolume">EBS Volume (GB): </label>
+        <input type="number" id="ebsVolume" name="ebsVolume" min="0" value="0">
+
+        <button id="calculateBtn">Calculate Price</button>
+        <div id="result" class="result"></div>
+
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Path to your local JSON file
+        const apiDataPath = 'api_data.json';
+
+        let jsonData = [];
+
+        // Fetch and process the JSON data
+        async function fetchApiData() {
+            try {
+                const response = await fetch(apiDataPath);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.statusText}`);
+                }
+
+                jsonData = await response.json();
+                console.log('Fetched JSON Data:', jsonData); // Print all JSON data
+                processAndPopulateDropdowns(jsonData);
+            } catch (error) {
+                console.error('Error fetching API data:', error);
+            }
+        }
+
+        // Process JSON data and populate dropdowns
+        function processAndPopulateDropdowns(data) {
+            const dropdownContainer = document.getElementById('dropdowns');
+            dropdownContainer.innerHTML = '';
+
+            const regions = new Set();
+            const operatingSystems = new Set();
+            const instanceTypes = new Set();
+
+            data.forEach(item => {
+                const attributes = item.product.attributes;
+                regions.add(attributes.location);
+                operatingSystems.add(attributes.operatingSystem);
+                instanceTypes.add(attributes.instanceType);
+            });
+
+            createDropdown('Regions', Array.from(regions), 'region', dropdownContainer);
+            createDropdown('Operating Systems', Array.from(operatingSystems), 'operatingSystem', dropdownContainer);
+            createDropdown('Instance Types', Array.from(instanceTypes), 'instanceType', dropdownContainer);
+        }
+
+        // Helper function to create a dropdown
+        function createDropdown(label, options, id, container) {
+            const dropdownDiv = document.createElement('div');
+            dropdownDiv.className = 'dropdown';
+
+            const dropdownLabel = document.createElement('label');
+            dropdownLabel.textContent = `${label}: `;
+            dropdownLabel.setAttribute('for', id);
+            dropdownDiv.appendChild(dropdownLabel);
+
+            const dropdownSelect = document.createElement('select');
+            dropdownSelect.id = id;
+            dropdownSelect.name = id;
+
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                dropdownSelect.appendChild(optionElement);
+            });
+
+            dropdownDiv.appendChild(dropdownSelect);
+            container.appendChild(dropdownDiv);
+        }
+
+        // Calculate price and display results
+        function calculatePrice() {
+            const region = document.getElementById('region').value;
+            const operatingSystem = document.getElementById('operatingSystem').value;
+            const instanceType = document.getElementById('instanceType').value;
+            const ebsVolume = parseFloat(document.getElementById('ebsVolume').value) || 0;
+
+            console.log('User Selections:', { region, operatingSystem, instanceType, ebsVolume }); // Print user selections
+
+            const matchingItem = jsonData.find(item => {
+                const attributes = item.product.attributes;
+                return attributes.location === region &&
+                       attributes.operatingSystem === operatingSystem &&
+                       attributes.instanceType === instanceType;
+            });
+
+            if (matchingItem) {
+                const onDemandTerms = matchingItem.terms.OnDemand;
+                const firstTermKey = Object.keys(onDemandTerms)[0];
+                const priceDimensions = onDemandTerms[firstTermKey].priceDimensions;
+                const firstPriceKey = Object.keys(priceDimensions)[0];
+                const pricePerHour = parseFloat(priceDimensions[firstPriceKey].pricePerUnit.USD);
+
+                const ebsCostPerGBPerMonth = 0.10; // Example EBS cost per GB per month
+                const ebsCost = ebsVolume * ebsCostPerGBPerMonth;
+
+                const pricePerMonth = (pricePerHour * 24 * 30) + ebsCost; // Include EBS cost
+                const priceWithMarkup = pricePerMonth * 1.3; // 30% markup
+
+                console.log('Matching Item:', matchingItem); // Print matching item details
+                console.log(`Price per Hour: $${pricePerHour.toFixed(2)}`);
+                console.log(`Price per Month: $${pricePerMonth.toFixed(2)}`);
+                console.log(`EBS Cost (per Month): $${ebsCost.toFixed(2)}`);
+                console.log(`Price with 30% Markup: $${priceWithMarkup.toFixed(2)}`);
+
+                document.getElementById('result').innerHTML = `
+                    <p>Price per Hour: $${pricePerHour.toFixed(2)}</p>
+                    <p>Price per Month: $${pricePerMonth.toFixed(2)}</p>
+                    <p>EBS Cost (per Month): $${ebsCost.toFixed(2)}</p>
+                    <p>Price with 30% Markup: $${priceWithMarkup.toFixed(2)}</p>
+                `;
+
+                // Update chart
+                updateChart(pricePerHour, pricePerMonth, ebsCost, priceWithMarkup);
+            } else {
+                console.log('No matching data found for the selected options.');
+                document.getElementById('result').textContent = 'No matching data found for the selected options.';
+            }
+        }
+
+        // Update the chart with the calculated data
+        function updateChart(pricePerHour, pricePerMonth, ebsCost, priceWithMarkup) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            const chartData = {
+                labels: ['Price per Hour', 'Price per Month', 'EBS Cost (Monthly)', 'Price with Markup'],
+                datasets: [{
+                    label: 'Cost Breakdown',
+                    data: [pricePerHour, pricePerMonth, ebsCost, priceWithMarkup],
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#E91E63'],
+                }]
+            };
+
+            if (window.priceChart && typeof window.priceChart.destroy === 'function') {
+                window.priceChart.destroy();
+            }
+            window.priceChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `$${context.raw.toFixed(2)}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listener for the calculate button
+        document.getElementById('calculateBtn').addEventListener('click', calculatePrice);
+
+        // Fetch data when the page loads
+        document.addEventListener('DOMContentLoaded', fetchApiData);
+    </script>
+</body>
+</html>
