@@ -1,4 +1,4 @@
-import { AWS_CREDENTIALS } from './credentials.js';
+import credentials from './credentials.js'; // Import the module as 'credentials'
 
 // Initialize AWS SDK
 AWS.config.update({
@@ -6,6 +6,7 @@ AWS.config.update({
     secretAccessKey: credentials.secretAccessKey,
     region: "us-east-1" // or any other region you want to use
 });
+
 
 
 const pricing = new AWS.Pricing();
