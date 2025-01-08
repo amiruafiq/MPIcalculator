@@ -2,10 +2,11 @@ import { AWS_CREDENTIALS } from './credentials.js';
 
 // Initialize AWS SDK
 AWS.config.update({
-    accessKeyId: AWS_CREDENTIALS.accessKeyId,
-    secretAccessKey: AWS_CREDENTIALS.secretAccessKey,
-    region: "us-east-1" // AWS Pricing API works only in us-east-1
+    accessKeyId: credentials.accessKeyId,
+    secretAccessKey: credentials.secretAccessKey,
+    region: "us-east-1" // or any other region you want to use
 });
+
 
 const pricing = new AWS.Pricing();
 

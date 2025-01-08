@@ -42,3 +42,9 @@ Use HTTPS to secure data transmission.
 Add a login feature for user-specific calculations.
 Include a dashboard to track historical queries.
 Optimize API calls for performance and cost.
+
+________________________________________________________________________________________________
+
+Issues
+
+![Alt Text](https://image-hosting-url/image-name.png)
