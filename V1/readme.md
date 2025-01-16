@@ -1,4 +1,5 @@
 
+## Step to run nodejs server
 Open directory ```V1/index.html``` this is my case
 
 
@@ -17,20 +18,20 @@ To fetch instance types directly from the backend, visit:
 @
 ```file:///Users/afiqkurshid/Documents/GitHub/MPIcalculator/V1/index.html```
 
-Expected Output
+# Expected Output
 
 After selecting the instance type, storage size, and clicking "Calculate," the estimated cost will be displayed.
 
-Example Output
+## Example Output
 
 
 
-**Project Structure
+### Project Structure
 ![alt text](img/1.png)
 ![alt text](img/2.png)
 
 
-*** After add 
+### After add 
 EC2 hourly cost.
 EC2 + storage hourly cost.
 Monthly cost for 30 days.
