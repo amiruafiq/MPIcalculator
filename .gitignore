@@ -3,3 +3,6 @@ V2/credentials.js
 V3/aws-credentials.js
 .DS_Store
 V4/.DS_Store
+V1/node_modules
+V1/package-lock.json
+V1/package.json

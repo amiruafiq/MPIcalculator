@@ -1,10 +1,13 @@
-// Import AWS SDK and Express
 const AWS = require("aws-sdk");
 const express = require("express");
-const credentials = require("./credentials");
+const cors = require("cors");
+const credentials = require("./credentials"); // Import your credentials.js
 
 const app = express();
 const PORT = 3000;
+
+// Enable CORS for all requests
+app.use(cors());
 
 // Configure AWS
 AWS.config.update({
@@ -30,11 +33,11 @@ app.get("/api/instances", async (req, res) => {
     res.json(instanceTypes);
   } catch (error) {
     console.error("Error fetching instance types:", error);
-    res.status(500).json({ error: "Failed to fetch instance types" });
+    res.status(500).json({ error: "Failed to fetch instance types", details: error.message });
   }
 });
 
-// Start the Express Server
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

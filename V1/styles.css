@@ -1,78 +1,119 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
-  }
-  
-  header {
-    background: #0073e6;
-    color: #fff;
-    padding: 1em;
-    text-align: center;
-  }
-  
-  main {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+header {
+  background: #0073e6;
+  color: #fff;
+  padding: 1em;
+  text-align: center;
+}
+
+main {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Styles */
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+form label {
+  grid-column: span 2;
+  font-weight: bold;
+}
+
+form input,
+form select,
+form button {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+form button {
+  grid-column: span 2;
+  background: #0073e6;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+form button:hover {
+  background: #005bb5;
+}
+
+form button:focus {
+  outline: 3px solid #80bfff;
+}
+
+/* Results Section */
+#results {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e6f7ff;
+  border: 1px solid #b3e0ff;
+  border-radius: 5px;
+}
+
+#results h2 {
+  margin: 0 0 10px;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 10px;
+  background: #0073e6;
+  color: #fff;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Dropdown Styling */
+#instanceTypeContainer select {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
   form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    grid-template-columns: 1fr;
   }
-  
-  form label {
-    grid-column: span 2;
-    font-weight: bold;
-  }
-  
-  form input,
-  form select,
+
   form button {
-    padding: 8px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    grid-column: span 1;
   }
-  
-  form button {
-    grid-column: span 2;
-    background: #0073e6;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-  }
-  
-  form button:hover {
-    background: #005bb5;
-  }
-  
-  #results {
-    margin-top: 20px;
+
+  main {
     padding: 15px;
-    background: #e6f7ff;
-    border: 1px solid #b3e0ff;
-    border-radius: 5px;
   }
-  
-  #results h2 {
-    margin: 0 0 10px;
-  }
-  
-  footer {
-    text-align: center;
-    padding: 10px;
-    background: #0073e6;
-    color: #fff;
-    position: relative;
-    bottom: 0;
-    width: 100%;
-  }
-  
+}
