@@ -54,3 +54,9 @@ I will need to do data cleansing
 
 ![alt text](img/dataAPI-2.png)
 
+-------------------------------
+
+## As of now (16 Jan 2025)
+1) Manage to call Instant type
+2) Manage to call only t4g.nano & t4g.micro for hourly rate
+3) However in main page it cant calculate yet
