@@ -40,8 +40,32 @@ function populateInstanceTypes(instanceTypes) {
   container.appendChild(instanceTypeDropdown);
 }
 
+// Fetch EC2 pricing
+async function fetchEC2Pricing(instanceType) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/pricing?instanceType=${instanceType}`);
+    const pricingData = await response.json();
+    return pricingData.pricePerHour; // Return the hourly cost
+  } catch (error) {
+    console.error("Error fetching EC2 pricing:", error);
+    return null;
+  }
+}
+
+// Fetch EBS pricing
+async function fetchStoragePricing() {
+  try {
+    const response = await fetch("http://localhost:3000/api/storagePricing");
+    const pricingData = await response.json();
+    return pricingData.pricePerGBMonth; // Return the cost per GB per month
+  } catch (error) {
+    console.error("Error fetching storage pricing:", error);
+    return null;
+  }
+}
+
 // Perform calculations
-function calculateCost() {
+async function calculateCost() {
   const instanceType = document.getElementById("instanceType").value;
   const storageSize = parseInt(document.getElementById("storageSize").value, 10);
 
@@ -50,32 +74,28 @@ function calculateCost() {
     return;
   }
 
-  // Find selected instance details
-  const selectedInstance = window.instanceTypes.find(
-    (instance) => instance.type === instanceType
-  );
+  // Fetch dynamic pricing
+  const ec2HourlyCost = await fetchEC2Pricing(instanceType);
+  const storageCostPerGB = await fetchStoragePricing();
 
-  if (!selectedInstance) {
-    alert("Selected instance type not found.");
+  if (ec2HourlyCost === null || storageCostPerGB === null) {
+    alert("Failed to fetch pricing data. Please try again later.");
     return;
   }
 
-  // Example cost calculation logic
-  const ec2HourlyCost = 0.469; // Example: hourly rate for m6id.2xlarge in USD
-  const storageCostPerGB = 0.08; // Example: per GB-month for GP3 storage in USD
+  // Calculate storage hourly cost
+  const storageHourlyCost = (storageSize * storageCostPerGB) / 720;
 
   // Individual calculations
-  const ec2Cost = ec2HourlyCost;
-  const storageCost = storageSize * storageCostPerGB / 720; // Convert monthly to hourly
-  const combinedHourlyCost = ec2Cost + storageCost;
+  const combinedHourlyCost = ec2HourlyCost + storageHourlyCost;
   const monthlyCost = combinedHourlyCost * 24 * 30; // 30 days
   const finalCostWithMarkup = monthlyCost * 1.3; // 30% markup
 
   // Update results display
   const resultDisplay = document.getElementById("result-display");
   resultDisplay.innerHTML = `
-    <p><strong>1) EC2 Cost per Hour:</strong> $${ec2Cost.toFixed(2)}</p>
-    <p><strong>2) EC2 + Storage Cost per Hour:</strong> $${combinedHourlyCost.toFixed(2)}</p>
+    <p><strong>1) EC2 Cost per Hour:</strong> $${ec2HourlyCost.toFixed(4)}</p>
+    <p><strong>2) EC2 + Storage Cost per Hour:</strong> $${combinedHourlyCost.toFixed(4)}</p>
     <p><strong>3) Monthly Cost (30 days):</strong> $${monthlyCost.toFixed(2)}</p>
     <p><strong>4) Monthly Cost with 30% Markup:</strong> $${finalCostWithMarkup.toFixed(2)}</p>
   `;
