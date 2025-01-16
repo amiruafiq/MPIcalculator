@@ -25,8 +25,15 @@ Example Output
 
 
 
-Project Structure
+**Project Structure
 ![alt text](img/1.png)
 ![alt text](img/2.png)
 
+
+*** After add 
+EC2 hourly cost.
+EC2 + storage hourly cost.
+Monthly cost for 30 days.
+Monthly cost with a 30% markup.
+![alt text](img/3.png)
 

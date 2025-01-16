@@ -40,7 +40,7 @@ function populateInstanceTypes(instanceTypes) {
   container.appendChild(instanceTypeDropdown);
 }
 
-// Perform calculation
+// Perform calculations
 function calculateCost() {
   const instanceType = document.getElementById("instanceType").value;
   const storageSize = parseInt(document.getElementById("storageSize").value, 10);
@@ -60,17 +60,25 @@ function calculateCost() {
     return;
   }
 
-  // Example cost calculation logic (adjust as needed)
-  const cpuCost = selectedInstance.cpu * 0.05; // $0.05 per CPU
-  const ramCost = selectedInstance.ram * 0.01; // $0.01 per GB of RAM
-  const storageCost = storageSize * 0.02; // $0.02 per GB of storage
+  // Example cost calculation logic
+  const ec2HourlyCost = 0.469; // Example: hourly rate for m6id.2xlarge in USD
+  const storageCostPerGB = 0.08; // Example: per GB-month for GP3 storage in USD
 
-  const totalCost = cpuCost + ramCost + storageCost;
+  // Individual calculations
+  const ec2Cost = ec2HourlyCost;
+  const storageCost = storageSize * storageCostPerGB / 720; // Convert monthly to hourly
+  const combinedHourlyCost = ec2Cost + storageCost;
+  const monthlyCost = combinedHourlyCost * 24 * 30; // 30 days
+  const finalCostWithMarkup = monthlyCost * 1.3; // 30% markup
 
-  // Update the results display
-  document.getElementById(
-    "result-display"
-  ).textContent = `Estimated Cost: $${totalCost.toFixed(2)} per hour.`;
+  // Update results display
+  const resultDisplay = document.getElementById("result-display");
+  resultDisplay.innerHTML = `
+    <p><strong>1) EC2 Cost per Hour:</strong> $${ec2Cost.toFixed(2)}</p>
+    <p><strong>2) EC2 + Storage Cost per Hour:</strong> $${combinedHourlyCost.toFixed(2)}</p>
+    <p><strong>3) Monthly Cost (30 days):</strong> $${monthlyCost.toFixed(2)}</p>
+    <p><strong>4) Monthly Cost with 30% Markup:</strong> $${finalCostWithMarkup.toFixed(2)}</p>
+  `;
 }
 
 // Event listener for calculate button
