@@ -44,3 +44,13 @@ Monthly cost with a 30% markup.
 ![alt text](img/4.png)
 ![alt text](img/5.png)
 
+
+
+### Type of data API call
+
+I will need to do data cleansing
+
+![alt text](img/dataAPI-1.png)
+
+![alt text](img/dataAPI-2.png)
+
