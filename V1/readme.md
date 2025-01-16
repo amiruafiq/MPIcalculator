@@ -78,9 +78,9 @@ Example Output
 
 
 Project Structure
+![alt text](V1/img/1.png)
+![alt text](V1/img/2.png)
 
-![Test Image 1](V1/img/1.png)
-![Test Image 2](V1/img/2.png)
 
 Troubleshooting
 
