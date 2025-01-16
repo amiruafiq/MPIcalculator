@@ -79,13 +79,8 @@ Example Output
 
 Project Structure
 
-V1/
-├── app.js           # Backend server code
-├── credentials.js   # AWS credentials (for testing purposes only)
-├── index.html       # Frontend UI
-├── script.js        # Frontend logic
-├── styles.css       # Frontend styling
-├── readme.md        # Documentation
+![Test Image 1](V1/img/1.png)
+![Test Image 2](V1/img/2.png)
 
 Troubleshooting
 
