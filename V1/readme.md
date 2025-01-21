@@ -58,6 +58,9 @@ I will need to do data cleansing
 ### How big the data is?
 ![alt text](img/apicallviapostman.png)
 
+
+### Can we filter this out?
+NO!! The AWS pricing API does not support filtering the response by instance type using a query parameter in the URL
 -------------------------------
 
 ## As of now (16 Jan 2025)
