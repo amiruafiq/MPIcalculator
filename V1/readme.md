@@ -56,7 +56,7 @@ I will need to do data cleansing
 
 
 ### How big the data is?
-![alt text](\img\apicallviapostman.png)
+![alt text](img/apicallviapostman.png)
 
 -------------------------------
 
