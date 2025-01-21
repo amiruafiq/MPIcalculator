@@ -54,6 +54,10 @@ I will need to do data cleansing
 
 ![alt text](img/dataAPI-2.png)
 
+
+### How big the data is?
+![alt text](\img\apicallviapostman.png)
+
 -------------------------------
 
 ## As of now (16 Jan 2025)
