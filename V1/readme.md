@@ -67,3 +67,20 @@ NO!! The AWS pricing API does not support filtering the response by instance typ
 1) Manage to call Instant type
 2) Manage to call only t4g.nano & t4g.micro for hourly rate
 3) However in main page it cant calculate yet
+
+-----------------------------------
+
+Call using AWS CLI
+
+aws pricing get-products \
+    --service-code AmazonEC2 \
+    --filters 'Type=TERM_MATCH,Field=instanceType,Value=t2.micro' \
+              'Type=TERM_MATCH,Field=operatingSystem,Value=Linux' \
+              'Type=TERM_MATCH,Field=location,Value=US East (N. Virginia)' \
+              'Type=TERM_MATCH,Field=termType,Value=OnDemand' \
+    --query "PriceList[0].terms.OnDemand.*.priceDimensions.*.pricePerUnit.USD" \
+    --output text
+
+
+= but output is too many
+same issue, unable to querry
