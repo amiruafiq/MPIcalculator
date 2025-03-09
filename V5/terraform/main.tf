@@ -52,13 +52,99 @@ resource "aws_s3_bucket_object" "pricing_csv_file" {
 # =======================
 # AWS LAMBDA FUNCTION
 # =======================
+resource "local_file" "lambda_python_script" {
+  filename = "lambda_function.py"
+  content  = <<EOT
+import json
+import boto3
+import pymysql
+import os
+import base64
+from botocore.exceptions import ClientError
+
+def get_secret():
+    secret_name = os.environ['DB_SECRET_NAME']
+    region_name = os.environ.get('AWS_REGION', 'ap-southeast-1')
+    
+    session = boto3.session.Session()
+    client = session.client(service_name='secretsmanager', region_name=region_name)
+    
+    try:
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    except ClientError as e:
+        raise e
+    
+    if 'SecretString' in get_secret_value_response:
+        return json.loads(get_secret_value_response['SecretString'])
+    else:
+        return json.loads(base64.b64decode(get_secret_value_response['SecretBinary']))
+
+def lambda_handler(event, context):
+    secret = get_secret()
+    connection = pymysql.connect(
+        host=os.environ['DB_HOST'],
+        user=secret['username'],
+        password=secret['password'],
+        database='aws_pricing',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    
+    query_params = event.get('queryStringParameters', {})
+    instance_type = query_params.get('instance_type', '')
+    os_type = query_params.get('os_type', '')
+    region = query_params.get('region', '')
+    
+    if not instance_type or not os_type or not region:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Missing required parameters"})
+        }
+    
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            SELECT price_per_hour FROM aws_instance_pricing 
+            WHERE instance_type=%s AND os_type=%s AND region=%s
+            """
+            cursor.execute(sql, (instance_type, os_type, region))
+            result = cursor.fetchone()
+        
+        if result:
+            return {
+                "statusCode": 200,
+                "body": json.dumps({
+                    "instance_type": instance_type,
+                    "os_type": os_type,
+                    "region": region,
+                    "price_per_hour": result['price_per_hour']
+                })
+            }
+        else:
+            return {
+                "statusCode": 404,
+                "body": json.dumps({"error": "Pricing data not found"})
+            }
+    
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
+    
+    finally:
+        connection.close()
+EOT
+}
+
 resource "aws_lambda_function" "pricing_api" {
   function_name = "aws_pricing_api"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.8"
   timeout       = 10
-  filename      = "lambda_function.zip"
+
+  filename         = local_file.lambda_python_script.filename
+  source_code_hash = filebase64sha256(local_file.lambda_python_script.filename)
 
   environment {
     variables = {
@@ -68,6 +154,7 @@ resource "aws_lambda_function" "pricing_api" {
 
   tags = var.tags
 }
+
 
 # =======================
 # API GATEWAY
