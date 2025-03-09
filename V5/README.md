@@ -5,14 +5,12 @@
 # AWS Infrastructure Deployment with Terraform
 
 ## Overview
-This project automates the deployment of AWS infrastructure using Terraform. The infrastructure includes:
+This Terraform configuration sets up an **AWS-based infrastructure** for hosting a **Node.js application on EC2**, connected to an **RDS (MySQL) database**. The infrastructure includes:
 
-- **RDS (MySQL)** for storing AWS instance pricing data
-- **AWS Lambda** for handling API requests
-- **API Gateway** to expose the Lambda function
-- **S3 Bucket** to store the CSV pricing data
-- **Secrets Manager** to securely store RDS credentials
-- **Terraform Remote Backend** using S3 and DynamoDB for state management
+- **EC2 Instance (Amazon Linux 2)** for hosting the frontend and backend (Node.js).
+- **RDS (MySQL)** for storing AWS instance pricing data.
+- **Security Group** with appropriate ports open (SSH, HTTP, Node.js API).
+- **Remote Terraform Backend** using S3 and DynamoDB for state management.
 
 ## File Structure
 
@@ -21,15 +19,16 @@ This project automates the deployment of AWS infrastructure using Terraform. The
 ├── main.tf          # Core AWS infrastructure deployment
 ├── backend.tf       # Terraform remote backend configuration
 ├── variables.tf     # Variable definitions
-├── terraform.tfvars # Variable values
+├── terraform.tfvars # Variable values (optional)
 ├── README.md        # Project documentation
 ```
 
 ## Prerequisites
 Before applying the Terraform configuration, ensure you have:
-- AWS CLI installed and configured (`aws configure`)
-- Terraform installed (`terraform -v`)
-- An S3 bucket and DynamoDB table for remote state management (see `backend.tf`)
+- **AWS CLI installed and configured** (`aws configure`)
+- **Terraform installed** (`terraform -v`)
+- **An S3 bucket and DynamoDB table** for remote state management (see `backend.tf`)
+- **A valid EC2 key pair** for SSH access
 
 ## Setup Instructions
 
@@ -57,59 +56,49 @@ Apply the Terraform configuration to provision the resources:
 terraform apply -auto-approve
 ```
 
-### 5️⃣ Get the API Gateway URL
-Once deployment is complete, Terraform will output the API Gateway URL:
+### 5️⃣ Connect to the EC2 Instance
+Once the EC2 instance is created, connect via SSH:
 ```sh
-Outputs:
-api_url = "https://your-api-url/prod/pricing"
+ssh -i your-key.pem ec2-user@your-ec2-public-ip
 ```
 
-### 6️⃣ Query the API from Frontend
-You can now use the API in your frontend application:
-```javascript
-fetch("https://your-api-url/prod/pricing?instance_type=t3.large&os_type=Redhat9Base&region=Singapore")
-  .then(response => response.json())
-  .then(data => console.log(data));
+### 6️⃣ Verify Node.js and API Deployment
+Your Node.js API should be running on **port 3000**.
+You can test it with:
+```sh
+curl http://your-ec2-public-ip:3000/pricing?instance_type=t3.large&os_type=Redhat9Base&region=Singapore
 ```
 
 ## Infrastructure Details
 
+### **🔹 EC2 Instance**
+- **OS:** Amazon Linux 2
+- **Software Installed:** Node.js, PM2, Git
+- **Runs Frontend + Backend (Express.js)**
+- **Exposed Ports:** 22 (SSH), 80 (HTTP), 3000 (Node.js API)
+
 ### **🔹 RDS Database**
-- Engine: MySQL
-- Instance Type: `db.t3.micro`
-- Stores AWS instance pricing data
-- Credentials stored securely in AWS Secrets Manager
+- **Engine:** MySQL
+- **Instance Type:** `db.t3.micro`
+- **Stores AWS instance pricing data**
 
-### **🔹 AWS Lambda**
-- Written in Python (`lambda_function.py`)
-- Retrieves instance pricing data from RDS
-- Connected to API Gateway
-
-### **🔹 API Gateway**
-- Exposes the Lambda function via REST API
-- Supports `GET` requests to fetch pricing data
-
-### **🔹 S3 Bucket**
-- Stores CSV pricing data
-- Public read access for CSV file
-
-### **🔹 Secrets Manager**
-- Stores RDS credentials securely
-- Accessed by Lambda function
+### **🔹 Security Group**
+- Allows **SSH (22)**, **HTTP (80)**, and **Node.js API (3000)** access.
 
 ### **🔹 Terraform Backend**
-- Stores Terraform state in an S3 bucket
-- Uses DynamoDB for state locking
+- Stores Terraform **state in an S3 bucket**
+- Uses **DynamoDB for state locking**
 
 ## Security Considerations
-- **Secrets Manager** is used to prevent hardcoded database credentials.
-- **IAM Policies** restrict Lambda access to only necessary AWS services.
-- **Terraform Backend** ensures safe and scalable infrastructure management.
+- **RDS credentials are stored securely in Terraform variables.**
+- **EC2 SSH access should be limited to trusted IPs.**
+- **Consider adding HTTPS (SSL) for secure API access.**
 
 ## Next Steps
-- Deploy the Lambda function code (`lambda_function.py`)
-- Integrate with a frontend UI
-- Automate deployments using GitHub Actions or Terraform Cloud
+- **Deploy the Node.js application** inside EC2 (`server.js`).
+- **Integrate a frontend UI** (React/Vue/HTML).
+- **Implement auto-scaling** for EC2.
+- **Enhance security** with IAM roles and parameterized DB credentials.
 
 ---
 

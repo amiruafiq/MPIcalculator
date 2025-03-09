@@ -4,10 +4,22 @@ variable "aws_region" {
   default     = "ap-southeast-1"
 }
 
-variable "s3_bucket_name" {
-  description = "Name of the S3 bucket for pricing CSV"
+variable "ec2_instance_type" {
+  description = "EC2 instance type"
   type        = string
-  default     = "aws-pricing-csv-bucket"
+  default     = "t3.micro"
+}
+
+variable "ec2_key_pair" {
+  description = "Key pair name for EC2 SSH access"
+  type        = string
+  default     = "your-key-pair"
+}
+
+variable "git_repo" {
+  description = "Git repository URL for the application"
+  type        = string
+  default     = "https://github.com/your-repo/your-app.git"
 }
 
 variable "rds_username" {
